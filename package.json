@@ -4,7 +4,13 @@
   "description": "A browser-based for monitoring transportation and traffic on the globe.",
   "main": "index.js",
   "scripts": {
-    "test": "test"
+    "dev": "concurrently  --kill-others  --names \"TSS,TSC,JSS\" --prefix-colors blue,magenta,green  npm:dev-watch-ts-server npm:dev-watch-ts-client npm:dev-watch-js-server",
+    "dev-watch-ts-server": "tsc -p src/server --watch",
+    "dev-watch-ts-client": "tsc -p src/client --watch",
+    "dev-watch-js-server": "nodemon  --watch dist/js  dist/js/server/server-main.js",
+    "prod": "npm run prod-build-ts-server && prod-run-main",
+    "prod-build-ts-server": "tsc -p src/server",
+    "prod-run-main": "node dist/js/server/main.js"
   },
   "repository": {
     "type": "git",
@@ -24,5 +30,17 @@
   "bugs": {
     "url": "https://github.com/Zulkir/GeoTraMon/issues"
   },
-  "homepage": "https://github.com/Zulkir/GeoTraMon#readme"
+  "homepage": "https://github.com/Zulkir/GeoTraMon#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "morgan": "^1.9.1",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "@types/express": "^4.16.1",
+    "@types/morgan": "^1.7.35",
+    "concurrently": "^4.1.0",
+    "nodemon": "^1.18.9",
+    "typescript": "^3.3.1"
+  }
 }
