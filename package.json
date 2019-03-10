@@ -1,0 +1,28 @@
+{
+  "name": "geotramon",
+  "version": "0.1.0",
+  "description": "A browser-based for monitoring transportation and traffic on the globe.",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zulkir/GeoTraMon.git"
+  },
+  "keywords": [
+    "transport",
+    "traffic",
+    "monitoring",
+    "globe",
+    "earth",
+    "3D",
+    "cesium"
+  ],
+  "author": "Daniil Rodin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Zulkir/GeoTraMon/issues"
+  },
+  "homepage": "https://github.com/Zulkir/GeoTraMon#readme"
+}
