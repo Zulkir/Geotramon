@@ -4,3 +4,6 @@
 # Node
 node_modules/
 
+# Distribution folder
+dist/js
+dist/public/js
