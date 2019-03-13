@@ -22,10 +22,6 @@ import {PointListInterpolationType} from '../../shared/algebra';
 import {inDfsOrder} from '../../shared/trees';
 import {HGraph} from '../../shared/hgraph';
 
-interface IPipeInfoWithDistance extends IPipeInfo {
-    distanceFactor: number;
-}
-
 export class NetworkingDataProvider implements IDataProvider {
     private meta: IMetaInfo;
     private root: ISpatialNodeInfo;
@@ -38,10 +34,18 @@ export class NetworkingDataProvider implements IDataProvider {
             endTime: new Date(2019, 1, 1, 0, 3, 0),
         };
 
-        let nextSpatialNodeId = this.meta.rootNodeId + 1;
+        let nextId = this.meta.rootNodeId + 1;
 
-        function generateSpatialNodeId() {
-            return nextSpatialNodeId++;
+        function generateId() {
+            return nextId++;
+        }
+
+        const idsByName: {[name:string]:number} = {};
+
+        function nodeIdByName(name: string) {
+            if (!idsByName[name])
+                idsByName[name] = generateId();
+            return idsByName[name];
         }
 
         const taubFloorPoints0 = [
@@ -127,6 +131,17 @@ export class NetworkingDataProvider implements IDataProvider {
             }
         }
 
+        function newArcPipe(fromName: string, toName: string) {
+            return {
+                type: PipeType.Arc,
+                width: 1,
+                fromNodeId: nodeIdByName(fromName),
+                toNodeId: nodeIdByName(toName),
+                biDirectional: true,
+                customProps: {},
+            }
+        }
+
         function newNode(fields: {
             id?: number;
             name: string,
@@ -141,7 +156,7 @@ export class NetworkingDataProvider implements IDataProvider {
             customProps?: any;
         }) : ISpatialNodeInfo {
             return {
-                id: fields.id || generateSpatialNodeId(),
+                id: fields.id || nodeIdByName(fields.name),
                 name: fields.name,
                 transform: fields.transform,
                 expandDistance: fields.expandDistance || 0,
@@ -185,84 +200,25 @@ export class NetworkingDataProvider implements IDataProvider {
             }
         };
 
-        const rootId = this.meta.rootNodeId;
-        const machbaId = generateSpatialNodeId();
-        const technionGroundId = generateSpatialNodeId();
-        const technionCsId = generateSpatialNodeId();
-        const technionCsFirstId = generateSpatialNodeId();
-        const technionCsSecondId = generateSpatialNodeId();
-        const technionCsThirdId = generateSpatialNodeId();
-        const hebrewUniId = generateSpatialNodeId();
-        const bguId = generateSpatialNodeId();
-        const ArielUniId = generateSpatialNodeId();
-        const technionComputerCenterBaseId = generateSpatialNodeId();
-        const technionEeBaseId = generateSpatialNodeId();
-        const cambridgeId = generateSpatialNodeId();
-        const berlinUniId = generateSpatialNodeId();
+        const pipe_Cambridge_Machba = newArcPipe("Cambridge", "Machba");
+        const pipe_Machba_Technion = newArcPipe("Machba", "Technion Computer Center");
+        const pipe_Machba_Hebrew = newArcPipe("Machba", "Hebrew University");
 
-        const pipe_Cambridge_Machba: IPipeInfoWithDistance = {
-            type: PipeType.Arc,
-            width: 1,
-            fromNodeId: cambridgeId,
-            toNodeId: machbaId,
-            biDirectional: true,
-            customProps: {},
-            distanceFactor: 15,
-        };
+        const pipe_TechnionCC_CS = newArcPipe("Technion Computer Center", "Technion CS");
+        const pipe_TechnionCC_EE = newArcPipe("Technion Computer Center", "Technion EE");
 
-        const pipe_Machba_Technion: IPipeInfoWithDistance = {
-            type: PipeType.Arc,
-            width: 1,
-            fromNodeId: machbaId,
-            toNodeId: technionComputerCenterBaseId,
-            biDirectional: true,
-            customProps: {},
-            distanceFactor: 5,
-        };
-
-        const pipe_Machba_Hebrew: IPipeInfoWithDistance = {
-            type: PipeType.Arc,
-            width: 1,
-            fromNodeId: machbaId,
-            toNodeId: hebrewUniId,
-            biDirectional: true,
-            customProps: {},
-            distanceFactor: 5,
-        };
-
-        const pipe_TechnionCC_CS: IPipeInfoWithDistance = {
-            type: PipeType.Arc,
-            width: 1,
-            fromNodeId: technionComputerCenterBaseId,
-            toNodeId: technionCsId,
-            biDirectional: true,
-            customProps: {},
-            distanceFactor: 5,
-        };
-
-        const pipe_TechnionCC_EE: IPipeInfoWithDistance = {
-            type: PipeType.Arc,
-            width: 1,
-            fromNodeId: technionComputerCenterBaseId,
-            toNodeId: technionEeBaseId,
-            biDirectional: true,
-            customProps: {},
-            distanceFactor: 5,
-        };
-
-        const pipe_TechnionCS_First: IPipeInfoWithDistance = {
+        const pipe_TechnionCS_First: IPipeInfo = {
             type: PipeType.Explicit,
             width: 1,
-            fromNodeId: technionCsId,
-            toNodeId: technionCsFirstId,
+            fromNodeId: idsByName["Technion CS"],
+            toNodeId: idsByName["Technion CS First"],
             biDirectional: true,
             customProps: {},
-            distanceFactor: 1,
             explicitPath: {
                 interpolationType: PointListInterpolationType.Cubic,
                 components: [
                     {
-                        nodeId: technionGroundId,
+                        nodeId: idsByName["Technion Ground"],
                         points: [
                             new Cesium.Cartesian3(4,    0,    0.2),
                             new Cesium.Cartesian3(6,    0,    0.2),
@@ -279,19 +235,18 @@ export class NetworkingDataProvider implements IDataProvider {
             }
         };
 
-        const pipe_TechnionCS_Second: IPipeInfoWithDistance = {
+        const pipe_TechnionCS_Second: IPipeInfo = {
             type: PipeType.Explicit,
             width: 1,
-            fromNodeId: technionCsId,
-            toNodeId: technionCsSecondId,
+            fromNodeId: idsByName["Technion CS"],
+            toNodeId: idsByName["Technion CS Second"],
             biDirectional: true,
             customProps: {},
-            distanceFactor: 1,
             explicitPath: {
                 interpolationType: PointListInterpolationType.Cubic,
                 components: [
                     {
-                        nodeId: technionGroundId,
+                        nodeId: idsByName["Technion Ground"],
                         points: [
                             new Cesium.Cartesian3(0, 4, 0.2),
                             new Cesium.Cartesian3(0, 6, 0.2),
@@ -310,19 +265,18 @@ export class NetworkingDataProvider implements IDataProvider {
             }
         };
 
-        const pipe_TechnionCS_Third: IPipeInfoWithDistance = {
+        const pipe_TechnionCS_Third: IPipeInfo = {
             type: PipeType.Explicit,
             width: 1,
-            fromNodeId: technionCsId,
-            toNodeId: technionCsThirdId,
+            fromNodeId: idsByName["Technion CS"],
+            toNodeId: idsByName["Technion CS Third"],
             biDirectional: true,
             customProps: {},
-            distanceFactor: 1,
             explicitPath: {
                 interpolationType: PointListInterpolationType.Cubic,
                 components: [
                     {
-                        nodeId: technionGroundId,
+                        nodeId: idsByName["Technion Ground"],
                         points: [
                             new Cesium.Cartesian3(0, 1, 5.1),
                             new Cesium.Cartesian3(0, 4, 9.1),
@@ -340,68 +294,15 @@ export class NetworkingDataProvider implements IDataProvider {
             }
         };
 
-        const pipe_Machba_BGU: IPipeInfoWithDistance = {
-            type: PipeType.Arc,
-            width: 1,
-            fromNodeId: machbaId,
-            toNodeId: bguId,
-            biDirectional: true,
-            customProps: {},
-            distanceFactor: 5,
-        };
-
-        const pipe_Heb_BGU: IPipeInfoWithDistance = {
-            type: PipeType.Arc,
-            width: 1,
-            fromNodeId: hebrewUniId,
-            toNodeId: bguId,
-            biDirectional: true,
-            customProps: {},
-            distanceFactor: 5,
-        };
-
-        const pipe_Machba_Ariel: IPipeInfoWithDistance = {
-            type: PipeType.Arc,
-            width: 1,
-            fromNodeId: machbaId,
-            toNodeId: ArielUniId,
-            biDirectional: true,
-            customProps: {},
-            distanceFactor: 5,
-        };
-
-        const pipe_Technion_Ariel: IPipeInfoWithDistance = {
-            type: PipeType.Arc,
-            width: 1,
-            fromNodeId: technionComputerCenterBaseId,
-            toNodeId: ArielUniId,
-            biDirectional: true,
-            customProps: {},
-            distanceFactor: 5,
-        };
-
-        const pipe_Heb_Ariel: IPipeInfoWithDistance = {
-            type: PipeType.Arc,
-            width: 1,
-            fromNodeId: hebrewUniId,
-            toNodeId: ArielUniId,
-            biDirectional: true,
-            customProps: {},
-            distanceFactor: 5,
-        };
-
-        const pipe_Technion_Berlin: IPipeInfoWithDistance = {
-            type: PipeType.Arc,
-            width: 1,
-            fromNodeId: technionComputerCenterBaseId,
-            toNodeId: berlinUniId,
-            biDirectional: true,
-            customProps: {},
-            distanceFactor: 10,
-        };
+        const pipe_Machba_BGU = newArcPipe("Machba", "Ben Gurion University");
+        const pipe_Heb_BGU = newArcPipe("Hebrew University", "Ben Gurion University");
+        const pipe_Machba_Ariel = newArcPipe("Machba", "Ariel University");
+        const pipe_Technion_Ariel = newArcPipe("Technion Computer Center", "Ariel University");
+        const pipe_Heb_Ariel = newArcPipe("Hebrew University", "Ariel University");
+        const pipe_Technion_Berlin = newArcPipe("Technion Computer Center", "Berlin University");
 
         this.root = newNode({
-            id: rootId,
+            id: this.meta.rootNodeId,
             name: 'Root',
             transform: transformZero(),
             pipes: [
@@ -428,7 +329,6 @@ export class NetworkingDataProvider implements IDataProvider {
                     ],
                     children: [
                         newNode({
-                            id: machbaId,
                             name: 'Machba',
                             transform: posAbsDeg(34.8058258, 32.108949),
                             site: {
@@ -453,7 +353,6 @@ IUCC promotes cooperation in these areas among member institutions, and between 
                             ],
                             children: [
                                 newNode({
-                                    id: technionGroundId,
                                     name: 'Technion Ground',
                                     transform:{
                                         relative: true,
@@ -519,11 +418,10 @@ IUCC promotes cooperation in these areas among member institutions, and between 
                                             ],
                                             children: [
                                                 newNode({
-                                                    id: technionCsId,
                                                     name: 'Base',
                                                     transform: transformRelativeIdentity(),
                                                     site: {
-                                                        name: "Technion - CS",
+                                                        name: "Technion CS",
                                                         description: `<p>The Department of Computer Science is the second largest academic unit in the Technion, 
 with approximately 1,800 undergraduate students (about one-sixth of the total number of Technion students) and over 250 graduate students. 
 It comprises over 50 faculty members of international repute with expertise in a wide variety of fields. 
@@ -545,8 +443,7 @@ engineers, technicians and secretaries supports the department's teaching and re
                                                     ]
                                                 }),
                                                 newNode({
-                                                    id: technionCsFirstId,
-                                                    name: 'First Computer',
+                                                    name: 'Technion CS First',
                                                     transform: {
                                                         relative: true,
                                                         coordinateType: CoordinateType.Cartesian,
@@ -561,8 +458,7 @@ engineers, technicians and secretaries supports the department's teaching and re
                                                     collapsedVisuals: [computerTableModel]
                                                 }),
                                                 newNode({
-                                                    id: technionCsSecondId,
-                                                    name: 'Second Computer',
+                                                    name: 'Technion CS Second',
                                                     transform: {
                                                         relative: true,
                                                         coordinateType: CoordinateType.Cartesian,
@@ -583,8 +479,7 @@ engineers, technicians and secretaries supports the department's teaching and re
                                             transform: transformRelativeIdentity(),
                                             children: [
                                                 newNode({
-                                                    id: technionCsThirdId,
-                                                    name: 'Third Computer',
+                                                    name: 'Technion CS Third',
                                                     transform: {
                                                         relative: true,
                                                         coordinateType: CoordinateType.Cartesian,
@@ -605,8 +500,7 @@ engineers, technicians and secretaries supports the department's teaching and re
                             ]
                         }),
                         newNode({
-                            id: hebrewUniId,
-                            name: 'HebrewUniCS',
+                            name: 'Hebrew University',
                             transform: posAbsDeg(35.1978656, 31.7765806),
                             site: {
                                 name: "Hebrew University - CS",
@@ -619,8 +513,7 @@ You are welcome to read more about our research activities, seminars, special ev
                             collapsedVisuals: [dataCenterBillboard]
                         }),
                         newNode({
-                            id: bguId,
-                            name: "Ben Gurion University - CS",
+                            name: "Ben Gurion University",
                             transform: posAbsDeg(34.8041082, 31.2622686),
                             site: {
                                 name: "Ben Gurion University - CS",
@@ -638,8 +531,7 @@ state-of-the-art research labs, and a spirit of congeniality and collegiality.</
                             collapsedVisuals: [dataCenterBillboard]
                         }),
                         newNode({
-                            id: ArielUniId,
-                            name: "Ariel University - CS",
+                            name: "Ariel University",
                             transform: posAbsDeg(35.2071627, 32.1037157),
                             site: {
                                 name: "Ariel University - CS",
@@ -662,8 +554,7 @@ computational geometry, graph theory, approximation algorithms, cryptography, ro
                             transform: posAbsDeg(35.0245425, 32.7772266),
                             children: [
                                 newNode({
-                                    id: technionComputerCenterBaseId,
-                                    name: 'Base',
+                                    name: 'Technion CC Base',
                                     transform: transformRelativeIdentity(),
                                     site: {
                                         name: "Techion - Computer Center",
@@ -679,8 +570,7 @@ computational geometry, graph theory, approximation algorithms, cryptography, ro
                             transform: posAbsDeg(35.0251956, 32.7758146),
                             children: [
                                 newNode({
-                                    id: technionEeBaseId,
-                                    name: 'Base',
+                                    name: 'Technion EE Base',
                                     transform: transformRelativeIdentity(),
                                     site: {
                                         name: "Techion - Electrical Engineering",
@@ -698,7 +588,6 @@ computational geometry, graph theory, approximation algorithms, cryptography, ro
                     transform: posAbsDeg(-2.5091442, 54.4338846),
                     children: [
                         newNode({
-                            id: cambridgeId,
                             name: 'Cambridge',
                             transform: posAbsDeg(0.0920459, 52.2109457),
                             site: {
@@ -718,8 +607,7 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
                     transform: posAbsDeg(9.9837941, 51.2488038),
                     children: [
                         newNode({
-                            id: berlinUniId,
-                            name: 'Berlin University - CS',
+                            name: 'Berlin University',
                             transform: posAbsDeg(13.2971595, 52.4559518),
                             site: {
                                 name: "University of Cambridge - Computer Laboratory",
