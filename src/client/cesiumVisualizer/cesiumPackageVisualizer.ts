@@ -176,7 +176,7 @@ export class CesiumPackageVisualizer {
 
         const positionProp = new Cesium.SampledPositionProperty();
         positionProp.setInterpolationOptions({
-            interpolationDegree: 1,
+            interpolationDegree: 2,
             interpolationAlgorithm: Cesium.HermitePolynomialApproximation
         });
 

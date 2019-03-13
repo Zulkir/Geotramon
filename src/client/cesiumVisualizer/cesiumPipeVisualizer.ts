@@ -94,7 +94,7 @@ czm_material czm_getMaterial(czm_materialInput materialInput)
     private addPipeDirection(node: ISpatialNode, pipe: IPipe, direction: PipeDirection) {
         const spline = getPipeSpline(pipe, direction);
         const dist = Cartesian3.distance(spline.points[0], spline.points[spline.points.length - 1]);
-        const splinePolyline = spline2polylineWithTolerance(spline, dist / 50000 + 0.01, dist / 1000 + 0.01);
+        const splinePolyline = spline2polylineWithTolerance(spline, 1, 1);
 
         const instance = new Cesium.GeometryInstance({
             geometry: new Cesium.PolylineGeometry({
