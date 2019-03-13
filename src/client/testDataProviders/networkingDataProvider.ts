@@ -2,14 +2,17 @@ import {EventCallback, IDataProvider, IMetaInfo, ISubscriptionToken} from '../..
 import {
     CoordinateType,
     GenericEventType,
+    IAbsolutePackagePositionInfo,
     IEventInfo,
     IPackageCreatedEventInfo,
     IPackageDestroyedEventInfo,
     IPackageInfo,
-    IPackageMovedEventInfo, IPackagePositionInfo,
+    IPackageMovedEventInfo,
+    IParentPackagePackagePositionInfo,
     IPipeInfo,
     IPipePackagePositionInfo,
     ISiteInfo,
+    ISitePackagePositionInfo,
     ISpatialNodeInfo,
     ISpatialNodeTransformInfo,
     ISpatialNodeVisualInfo,
@@ -18,9 +21,11 @@ import {
     PipeType
 } from '../../shared/dataInfo';
 import {CesiumTransform} from '../cesiumTransform';
-import {PointListInterpolationType} from '../../shared/algebra';
+import {IColor, PointListInterpolationType} from '../../shared/algebra';
 import {inDfsOrder} from '../../shared/trees';
 import {HGraph} from '../../shared/hgraph';
+import Color = Cesium.Color;
+import Cartesian3 = Cesium.Cartesian3;
 
 export class NetworkingDataProvider implements IDataProvider {
     private meta: IMetaInfo;
@@ -210,15 +215,15 @@ export class NetworkingDataProvider implements IDataProvider {
         const pipe_TechnionCS_First: IPipeInfo = {
             type: PipeType.Explicit,
             width: 1,
-            fromNodeId: idsByName["Technion CS"],
-            toNodeId: idsByName["Technion CS First"],
+            fromNodeId: nodeIdByName("Technion CS"),
+            toNodeId: nodeIdByName("Technion CS First"),
             biDirectional: true,
             customProps: {},
             explicitPath: {
                 interpolationType: PointListInterpolationType.Cubic,
                 components: [
                     {
-                        nodeId: idsByName["Technion Ground"],
+                        nodeId: nodeIdByName("Technion Ground"),
                         points: [
                             new Cesium.Cartesian3(4,    0,    0.2),
                             new Cesium.Cartesian3(6,    0,    0.2),
@@ -238,15 +243,15 @@ export class NetworkingDataProvider implements IDataProvider {
         const pipe_TechnionCS_Second: IPipeInfo = {
             type: PipeType.Explicit,
             width: 1,
-            fromNodeId: idsByName["Technion CS"],
-            toNodeId: idsByName["Technion CS Second"],
+            fromNodeId: nodeIdByName("Technion CS"),
+            toNodeId: nodeIdByName("Technion CS Second"),
             biDirectional: true,
             customProps: {},
             explicitPath: {
                 interpolationType: PointListInterpolationType.Cubic,
                 components: [
                     {
-                        nodeId: idsByName["Technion Ground"],
+                        nodeId: nodeIdByName("Technion Ground"),
                         points: [
                             new Cesium.Cartesian3(0, 4, 0.2),
                             new Cesium.Cartesian3(0, 6, 0.2),
@@ -268,15 +273,15 @@ export class NetworkingDataProvider implements IDataProvider {
         const pipe_TechnionCS_Third: IPipeInfo = {
             type: PipeType.Explicit,
             width: 1,
-            fromNodeId: idsByName["Technion CS"],
-            toNodeId: idsByName["Technion CS Third"],
+            fromNodeId: nodeIdByName("Technion CS"),
+            toNodeId: nodeIdByName("Technion CS Third"),
             biDirectional: true,
             customProps: {},
             explicitPath: {
                 interpolationType: PointListInterpolationType.Cubic,
                 components: [
                     {
-                        nodeId: idsByName["Technion Ground"],
+                        nodeId: nodeIdByName("Technion Ground"),
                         points: [
                             new Cesium.Cartesian3(0, 1, 5.1),
                             new Cesium.Cartesian3(0, 4, 9.1),
@@ -344,7 +349,7 @@ IUCC promotes cooperation in these areas among member institutions, and between 
                             collapsedVisuals: [dataCenterBillboard]
                         }),
                         newNode({
-                            name: 'TechnionCS',
+                            name: 'Technion CS Building',
                             transform: posAbsDeg(35.0215658, 32.7776437),
                             pipes: [
                                 pipe_TechnionCS_First,
@@ -418,7 +423,7 @@ IUCC promotes cooperation in these areas among member institutions, and between 
                                             ],
                                             children: [
                                                 newNode({
-                                                    name: 'Base',
+                                                    name: 'Technion CS',
                                                     transform: transformRelativeIdentity(),
                                                     site: {
                                                         name: "Technion CS",
@@ -552,34 +557,22 @@ computational geometry, graph theory, approximation algorithms, cryptography, ro
                         newNode({
                             name: 'Technion Computer Center',
                             transform: posAbsDeg(35.0245425, 32.7772266),
-                            children: [
-                                newNode({
-                                    name: 'Technion CC Base',
-                                    transform: transformRelativeIdentity(),
-                                    site: {
-                                        name: "Techion - Computer Center",
-                                        description: "<p></p>",
-                                        customProps: {}
-                                    },
-                                    collapsedVisuals: [dataCenterBillboard]
-                                })
-                            ]
+                            site: {
+                                name: "Techion - Computer Center",
+                                description: "<p></p>",
+                                customProps: {}
+                            },
+                            collapsedVisuals: [dataCenterBillboard]
                         }),
                         newNode({
                             name: 'Technion EE',
                             transform: posAbsDeg(35.0251956, 32.7758146),
-                            children: [
-                                newNode({
-                                    name: 'Technion EE Base',
-                                    transform: transformRelativeIdentity(),
-                                    site: {
-                                        name: "Techion - Electrical Engineering",
-                                        description: "<p></p>",
-                                        customProps: {}
-                                    },
-                                    collapsedVisuals: [dataCenterBillboard]
-                                })
-                            ]
+                            site: {
+                                name: "Techion - Electrical Engineering",
+                                description: "<p></p>",
+                                customProps: {}
+                            },
+                            collapsedVisuals: [dataCenterBillboard]
                         })
                     ]
                 }),
@@ -621,6 +614,10 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
             ]
         });
 
+        function randomElem<T>(array: T[]) {
+            const index = Math.floor((Math.random() * array.length));
+            return array[index];
+        }
 
         this.events = [];
         {
@@ -657,19 +654,61 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
                     x.fromNodeId == idTo && x.toNodeId == idFrom && x.biDirectional)!;
             }
 
+            const interUniPipes = [
+                pipe_Heb_Ariel,
+                pipe_Heb_BGU,
+                pipe_Machba_Ariel,
+                pipe_Machba_BGU,
+                pipe_Machba_Hebrew,
+                pipe_Machba_Technion,
+                pipe_Technion_Ariel,
+            ];
+
             const self = this;
 
-            function createPackage(time: Date, packageId: number, info: IPackageInfo) {
-                self.events.push(<IPackageCreatedEventInfo>{
+            function createPackage(time: Date, packageId: number, info: IPackageInfo) : IPackageCreatedEventInfo {
+                const event = <IPackageCreatedEventInfo>{
                     time: time,
                     genericEventType: GenericEventType.Package,
                     packageEventType: PackageEventType.Created,
                     packageId: packageId,
                     package: info
+                };
+                self.events.push(event);
+                return event;
+            }
+
+            function movePackageToSite(time: Date, packageId: number, info: ISitePackagePositionInfo) {
+                self.events.push(<IPackageMovedEventInfo>{
+                    time: time,
+                    genericEventType: GenericEventType.Package,
+                    packageEventType: PackageEventType.Moved,
+                    packageId: packageId,
+                    newPosition: info
+                });
+            }
+
+            function movePackageToPackage(time: Date, packageId: number, info: IParentPackagePackagePositionInfo) {
+                self.events.push(<IPackageMovedEventInfo>{
+                    time: time,
+                    genericEventType: GenericEventType.Package,
+                    packageEventType: PackageEventType.Moved,
+                    packageId: packageId,
+                    newPosition: info
                 });
             }
 
             function movePackageToPipe(time: Date, packageId: number, info: IPipePackagePositionInfo) {
+                self.events.push(<IPackageMovedEventInfo>{
+                    time: time,
+                    genericEventType: GenericEventType.Package,
+                    packageEventType: PackageEventType.Moved,
+                    packageId: packageId,
+                    newPosition: info
+                });
+            }
+
+            function movePackageAbsolute(time: Date, packageId: number, info: IAbsolutePackagePositionInfo) {
                 self.events.push(<IPackageMovedEventInfo>{
                     time: time,
                     genericEventType: GenericEventType.Package,
@@ -692,74 +731,257 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
                 return new Date(date.getTime() + seconds * 1000);
             }
 
-            function randomSaturatedColor() {
-                switch (Math.floor(Math.random() * 6)) {
-                    case 0: return new Cesium.Color(Math.random(), 0, 1, 1);
-                    case 1: return new Cesium.Color(Math.random(), 1, 0, 1);
-                    case 2: return new Cesium.Color(0, Math.random(), 1, 1);
-                    case 3: return new Cesium.Color(1, Math.random(), 0, 1);
-                    case 4: return new Cesium.Color(0, 1, Math.random(), 1);
-                    case 5: return new Cesium.Color(1, 0, Math.random(), 1);
-                }
-                throw "Should never happen";
-            }
+            const companies: Array<{name: string, color: IColor}> = [
+                {
+                    name: "Google",
+                    color: Color.GREEN
+                },
+                {
+                    name: "IBM",
+                    color: Color.LIGHTSKYBLUE
+                },
+                {
+                    name: "Amazon",
+                    color: Color.YELLOW
+                },
+                {
+                    name: "Microsoft",
+                    color: Color.BLUE
+                },
+            ];
 
-            const timeDisambiguator = 0.001;
+            // TRANSFERS
+            {
+                let currentTime = this.meta.startTime;
 
-            let currentTime = this.meta.startTime;
-            for (let i = 0; i < 100; i++) {
-                const idFrom = connectedNodeIds[Math.floor((Math.random() * connectedNodeIds.length))];
-                const idTo = connectedNodeIds[Math.floor((Math.random() * connectedNodeIds.length))];
-                if (idFrom === idTo)
-                    continue;
-                const path = hgraph.findPath(nodesById[idFrom], nodesById[idTo]);
-                if (!path)
-                    continue;
-                const pathIds = path.map(x => x.id);
+                for (let i = 0; i < 200; i++) {
+                    const pipe = randomElem(interUniPipes);
+                    const fromToIds = [pipe.fromNodeId, pipe.toNodeId];
+                    if (Math.random() > 0.5)
+                        fromToIds.reverse();
+                    const fromId = fromToIds[0];
+                    const toId = fromToIds[1];
 
-                const timestamps = [currentTime];
-                createPackage(timestamps[0], i, {
-                    name: `Packet #${i}`,
-                    description: `<p>A <strong>test</strong> packet.</p>
-<p>Start Time: ${currentTime}</p>
-<br/>
-<p>From: ${idFrom}</p>
-<p>To: ${idTo}</p>
-<p>Path: ${pathIds}</p>
-`,
-                    visual: {
-                        billboard: {
-                            color: randomSaturatedColor(),
-                            image: './images/packet2.png',
-                            width: 16,
-                            height: 16,
-                            eyeOffset: new Cesium.Cartesian3(0, 0, -2)
+                    const company = randomElem(companies);
+                    const packageId = generateId();
+                    const sizeInGigs = 2 * (10 + 90 * Math.random());
+                    const durationInSeconds = sizeInGigs / 10;
+
+                    let currentPackageTime = currentTime;
+
+                    createPackage(currentPackageTime, packageId, {
+                        name: `${packageId}: ${company.name} transfer from ${nodesById[fromId].name} to ${nodesById[toId].name}`,
+                        description: `<p>Size: ${sizeInGigs} GB<br/>Duration: ${durationInSeconds} sec</p>`,
+                        customProps: {},
+                        visual: {
+                            billboard: {
+                                image: "/images/white-square.png",
+                                color: company.color,
+                                width: 16,
+                                height: 16,
+                                eyeOffset: new Cartesian3(0, 0, -2)
+                            }
                         }
-                    },
-                    customProps: {}
-                });
-                for (let j = 1; j < pathIds.length; j++) {
-                    let pipeFromId = pathIds[j - 1];
-                    let pipeToId = pathIds[j];
-                    const pipe = getPipeBetween(pipeFromId, pipeToId);
-                    const pipeTravelTime = (Math.random() * 5 + 1) * ((<any>pipe).distanceFactor || 1);
-                    timestamps.push(addSeconds(timestamps[j - 1], pipeTravelTime));
-                    movePackageToPipe(addSeconds(timestamps[j - 1], timeDisambiguator), i, {
+                    });
+
+                    movePackageToPipe(addSeconds(currentPackageTime, 0.01), packageId, {
                         type: PackagePositionInfoType.Pipe,
-                        fromSiteNodeId: pipeFromId,
-                        toSiteNodeId: pipeToId,
+                        fromSiteNodeId: fromId,
+                        toSiteNodeId: toId,
                         interpolationAmount: 0
                     });
-                    movePackageToPipe(timestamps[j], i, {
+
+                    currentPackageTime = addSeconds(currentPackageTime, durationInSeconds);
+
+                    movePackageToPipe(addSeconds(currentPackageTime, 0.01), packageId, {
                         type: PackagePositionInfoType.Pipe,
-                        fromSiteNodeId: pipeFromId,
-                        toSiteNodeId: pipeToId,
+                        fromSiteNodeId: fromId,
+                        toSiteNodeId: toId,
                         interpolationAmount: 1
                     });
-                }
-                destroyPackage(addSeconds(timestamps[timestamps.length - 1], timeDisambiguator), i);
 
-                currentTime = addSeconds(currentTime, Math.random() * 1.1 + 0.01);
+                    destroyPackage(addSeconds(currentPackageTime, 0.01), packageId);
+
+                    currentTime = addSeconds(currentTime, 0.1 + 3 * Math.random());
+                }
+            }
+
+            // USER
+            {
+                let currentTime = this.meta.startTime;
+
+                for (let i = 0; i < 200; i++) {
+                    const pipe = randomElem(interUniPipes);
+                    const fromToIds = [pipe.fromNodeId, pipe.toNodeId];
+                    if (Math.random() > 0.5)
+                        fromToIds.reverse();
+                    const fromId = fromToIds[0];
+                    const toId = fromToIds[1];
+
+                    const company = randomElem(companies);
+                    const packageId = generateId();
+                    const durationInSeconds = 3;
+
+                    let currentPackageTime = currentTime;
+
+                    createPackage(currentPackageTime, packageId, {
+                        name: `${packageId}: ${company.name} user data from ${nodesById[fromId].name} to ${nodesById[toId].name}`,
+                        description: "",
+                        customProps: {},
+                        visual: {
+                            billboard: {
+                                image: "/images/packet2.png",
+                                color: company.color,
+                                width: 16,
+                                height: 16,
+                                eyeOffset: new Cartesian3(0, 0, -2)
+                            }
+                        }
+                    });
+
+                    movePackageToPipe(addSeconds(currentPackageTime, 0.01), packageId, {
+                        type: PackagePositionInfoType.Pipe,
+                        fromSiteNodeId: fromId,
+                        toSiteNodeId: toId,
+                        interpolationAmount: 0
+                    });
+
+                    currentPackageTime = addSeconds(currentPackageTime, durationInSeconds);
+
+                    movePackageToPipe(addSeconds(currentPackageTime, 0.01), packageId, {
+                        type: PackagePositionInfoType.Pipe,
+                        fromSiteNodeId: fromId,
+                        toSiteNodeId: toId,
+                        interpolationAmount: 1
+                    });
+
+                    destroyPackage(addSeconds(currentPackageTime, 0.01), packageId);
+
+                    currentTime = addSeconds(currentTime, 0.1 + 3 * Math.random());
+                }
+            }
+
+            const externalPipes = [
+                pipe_Cambridge_Machba,
+                pipe_Technion_Berlin
+            ];
+
+            // EXTERNAL
+            {
+                let currentTime = this.meta.startTime;
+
+                for (let i = 0; i < 200; i++) {
+                    const pipe = randomElem(externalPipes);
+                    const fromToIds = [pipe.fromNodeId, pipe.toNodeId];
+                    if (Math.random() > 0.5)
+                        fromToIds.reverse();
+                    const fromId = fromToIds[0];
+                    const toId = fromToIds[1];
+
+                    const company = randomElem(companies);
+                    const packageId = generateId();
+                    const sizeInGigs = 2 * (10 + 90 * Math.random());
+                    const durationInSeconds = sizeInGigs / 10;
+
+                    let currentPackageTime = currentTime;
+
+                    createPackage(currentPackageTime, packageId, {
+                        name: `${packageId}: ${company.name} transfer from ${nodesById[fromId].name} to ${nodesById[toId].name}`,
+                        description: `<p>Size: ${sizeInGigs} GB<br/>Duration: ${durationInSeconds} sec</p>`,
+                        customProps: {},
+                        visual: {
+                            billboard: {
+                                image: "/images/white-square.png",
+                                color: company.color,
+                                width: 16,
+                                height: 16,
+                                eyeOffset: new Cartesian3(0, 0, -2)
+                            }
+                        }
+                    });
+
+                    movePackageToPipe(addSeconds(currentPackageTime, 0.01), packageId, {
+                        type: PackagePositionInfoType.Pipe,
+                        fromSiteNodeId: fromId,
+                        toSiteNodeId: toId,
+                        interpolationAmount: 0
+                    });
+
+                    currentPackageTime = addSeconds(currentPackageTime, durationInSeconds);
+
+                    movePackageToPipe(addSeconds(currentPackageTime, 0.01), packageId, {
+                        type: PackagePositionInfoType.Pipe,
+                        fromSiteNodeId: fromId,
+                        toSiteNodeId: toId,
+                        interpolationAmount: 1
+                    });
+
+                    destroyPackage(addSeconds(currentPackageTime, 0.01), packageId);
+
+                    currentTime = addSeconds(currentTime, 0.1 + 3 * Math.random());
+                }
+            }
+
+            const technionPipes = [
+               pipe_TechnionCC_CS,
+               pipe_TechnionCC_EE,
+               pipe_TechnionCS_First,
+               pipe_TechnionCS_Second,
+               pipe_TechnionCS_Third
+            ];
+
+            // Technion
+            {
+                let currentTime = this.meta.startTime;
+
+                for (let i = 0; i < 200; i++) {
+                    const pipe = randomElem(technionPipes);
+                    const fromToIds = [pipe.fromNodeId, pipe.toNodeId];
+                    if (Math.random() > 0.5)
+                        fromToIds.reverse();
+                    const fromId = fromToIds[0];
+                    const toId = fromToIds[1];
+
+                    const packageId = generateId();
+                    const durationInSeconds = 3;
+
+                    let currentPackageTime = currentTime;
+
+                    createPackage(currentPackageTime, packageId, {
+                        name: `${packageId}: Technion internal data from ${nodesById[fromId].name} to ${nodesById[toId].name}`,
+                        description: "",
+                        customProps: {},
+                        visual: {
+                            billboard: {
+                                image: "/images/packet2.png",
+                                color: Color.DARKBLUE,
+                                width: 16,
+                                height: 16,
+                                eyeOffset: new Cartesian3(0, 0, -2)
+                            }
+                        }
+                    });
+
+                    movePackageToPipe(addSeconds(currentPackageTime, 0.01), packageId, {
+                        type: PackagePositionInfoType.Pipe,
+                        fromSiteNodeId: fromId,
+                        toSiteNodeId: toId,
+                        interpolationAmount: 0
+                    });
+
+                    currentPackageTime = addSeconds(currentPackageTime, durationInSeconds);
+
+                    movePackageToPipe(addSeconds(currentPackageTime, 0.01), packageId, {
+                        type: PackagePositionInfoType.Pipe,
+                        fromSiteNodeId: fromId,
+                        toSiteNodeId: toId,
+                        interpolationAmount: 1
+                    });
+
+                    destroyPackage(addSeconds(currentPackageTime, 0.01), packageId);
+
+                    currentTime = addSeconds(currentTime, 0.1 + 0.5 * Math.random());
+                }
             }
         }
     }
