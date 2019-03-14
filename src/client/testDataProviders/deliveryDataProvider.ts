@@ -1100,7 +1100,7 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
                 const planeVisual: IVisualInfo = {
                     model: {
                         uri: "/models/Cesium_Air.glb",
-                        color: Cesium.Color.add(Cesium.Color.PURPLE, Cesium.Color.GRAY, new Cesium.Color()),
+                        color: Cesium.Color.add(Cesium.Color.YELLOW, Cesium.Color.GRAY, new Cesium.Color()),
                         //scale: 1,
                         minimumPixelSize: 96,
                         maximumScale : 20000,
@@ -1112,7 +1112,7 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
                 const truckVisual: IVisualInfo = {
                     model: {
                         uri: "/models/GroundVehicle.glb",
-                        color: Cesium.Color.add(Cesium.Color.PURPLE, Cesium.Color.GRAY, new Cesium.Color()),
+                        color: Cesium.Color.add(Cesium.Color.YELLOW, Cesium.Color.GRAY, new Cesium.Color()),
                         //scale: 1,
                         minimumPixelSize: 96,
                         maximumScale : 2000
@@ -1123,7 +1123,7 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
                     model: {
                         uri: "/models/CesiumMilkTruck-kmc.glb",
                         //uri: "/models/GroundVehicle.glb",
-                        color: Cesium.Color.add(Cesium.Color.PURPLE, Cesium.Color.GRAY, new Cesium.Color()),
+                        color: Cesium.Color.add(Cesium.Color.YELLOW, Cesium.Color.GRAY, new Cesium.Color()),
                         //scale: 1,
                         minimumPixelSize: 96,
                         maximumScale : 200
