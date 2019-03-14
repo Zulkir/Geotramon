@@ -986,7 +986,7 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
 
             // ERRORS
             {
-                let currentTime = addSeconds(this.meta.startTime, 5);
+                let currentTime = addSeconds(this.meta.startTime, 10);
 
                 const pipe = pipe_Machba_Hebrew;
                 const currentErrorIds: number[] = [];
@@ -1001,14 +1001,15 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
                 const errorEvents: ErrorEvent[] = [];
                 const stack = new Error().stack;
 
-                for (let i = 0; i < 10; i++) {
-                    let errorCurrentTime = currentTime;
+                // todo: find out why 10 does not work
+                for (let i = 0; i < 4; i++) {
+                    const errorStartTime = currentTime;
                     const errorId = generateId();
                     errorEvents.push({
-                        time: errorCurrentTime,
+                        time: errorStartTime,
                         errorId: errorId,
                         emitOwnEvents: () => {
-                            createPackage(errorCurrentTime, errorId, {
+                            createPackage(errorStartTime, errorId, {
                                 name: "Error " + errorId,
                                 description: stack,
                                 customProps: {},
@@ -1022,35 +1023,62 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
                                     }
                                 }
                             });
+                            movePackageToPipe(addSeconds(errorStartTime, 0.01), errorId, {
+                                type: PackagePositionInfoType.Pipe,
+                                fromSiteNodeId: pipe.fromNodeId,
+                                toSiteNodeId: pipe.toNodeId,
+                                interpolationAmount: 0
+                            });
                         },
                         applyToList: () => currentErrorIds.push(errorId)
                     });
-                    errorCurrentTime = addSeconds(errorCurrentTime, 10);
+                    const errorEndTime = addSeconds(errorStartTime, 10);
                     errorEvents.push({
-                        time: errorCurrentTime,
+                        time: errorEndTime,
                         errorId: errorId,
-                        emitOwnEvents: () => destroyPackage(errorCurrentTime, errorId),
+                        emitOwnEvents: () => {
+                            movePackageToPipe(addSeconds(errorEndTime, 0.3), errorId, {
+                                type: PackagePositionInfoType.Pipe,
+                                fromSiteNodeId: pipe.fromNodeId,
+                                toSiteNodeId: pipe.toNodeId,
+                                interpolationAmount: 1
+                            });
+                            destroyPackage(addSeconds(errorEndTime,0.31), errorId);
+                        },
                         applyToList: () => currentErrorIds.splice(currentErrorIds.indexOf(errorId), 1)
                     });
 
-                    currentTime = addSeconds(currentTime, 1);
+                    currentTime = addSeconds(currentTime, 0.7 + 3 * Math.random());
                 }
 
                 errorEvents.sort((x, y) => x.time.getTime() - y.time.getTime());
 
                 for (let errorEvent of errorEvents) {
-                    errorEvent.emitOwnEvents();
-                    errorEvent.applyToList();
-
                     console.log(`time: ${errorEvent.time}, error: ${errorEvent.errorId}`);
 
                     for (let i = 0; i < currentErrorIds.length; i++) {
                         const errorId = currentErrorIds[i];
-                        movePackageToPipe(errorEvent.time, errorId, {
+                        movePackageToPipe(addSeconds(errorEvent.time, 0.1), errorId, {
                             type: PackagePositionInfoType.Pipe,
-                            fromSiteNodeId: pipe.toNodeId,
-                            toSiteNodeId: pipe.fromNodeId,
-                            interpolationAmount: (2 + i) / (currentErrorIds.length + 4)
+                            fromSiteNodeId: pipe.fromNodeId,
+                            toSiteNodeId: pipe.toNodeId,
+                            interpolationAmount: (2 + i) / (currentErrorIds.length + 3)
+                        });
+                    }
+
+                    errorEvent.emitOwnEvents();
+                    errorEvent.applyToList();
+
+                    currentErrorIds.sort();
+                    currentErrorIds.reverse();
+
+                    for (let i = 0; i < currentErrorIds.length; i++) {
+                        const errorId = currentErrorIds[i];
+                        movePackageToPipe(addSeconds(errorEvent.time, 0.2), errorId, {
+                            type: PackagePositionInfoType.Pipe,
+                            fromSiteNodeId: pipe.fromNodeId,
+                            toSiteNodeId: pipe.toNodeId,
+                            interpolationAmount: (2 + i) / (currentErrorIds.length + 3)
                         });
                     }
                 }

@@ -286,13 +286,30 @@ export class CesiumPackageVisualizer {
 
             // todo: use more than 2 samples
 
-            const firstSample = pastPipeSamples[0];
-            const lastSample = pastPipeSamples[pastPipeSamples.length - 1];
+            for (let i = 1; i < pastPipeSamples.length; i++) {
+                const s1 = pastPipeSamples[i - 1];
+                const s2 = pastPipeSamples[i];
 
-            for (let i = 0; i < pipePoints.length; i++) {
-                const amount = i / (pipePoints.length - 1);
-                const time = Cesium.Math.lerp(firstSample.time, lastSample.time, amount);
-                emitSample(time, pipePoints[i]);
+                const relevantPoints: Cartesian3[] = [];
+                for (let j = 0; j < pipePoints.length; j++) {
+                    const amount = j / (pipePoints.length - 1);
+                    if (amount < s1.amount)
+                        continue;
+                    if (amount > s2.amount)
+                        break;
+                    relevantPoints.push(pipePoints[j]);
+                }
+
+                if (relevantPoints.length == 0) {
+                    const amount = (s1.amount + s2.amount) / 2;
+                    relevantPoints.push(pipePoints[Math.round(amount * (pipePoints.length - 1))])
+                }
+
+                for (let j = 0; j < relevantPoints.length; j++) {
+                    const amount = j / (relevantPoints.length - 1);
+                    const time = Cesium.Math.lerp(s1.time, s2.time, amount);
+                    emitSample(time, relevantPoints[j]);
+                }
             }
 
             /*
