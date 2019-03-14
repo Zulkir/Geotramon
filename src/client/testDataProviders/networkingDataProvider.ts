@@ -983,6 +983,78 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
                     currentTime = addSeconds(currentTime, 0.1 + 0.5 * Math.random());
                 }
             }
+
+            // ERRORS
+            {
+                let currentTime = addSeconds(this.meta.startTime, 5);
+
+                const pipe = pipe_Machba_Hebrew;
+                const currentErrorIds: number[] = [];
+
+                interface ErrorEvent {
+                    time: Date,
+                    errorId: number,
+                    emitOwnEvents: () => void,
+                    applyToList: () => void
+                }
+
+                const errorEvents: ErrorEvent[] = [];
+                const stack = new Error().stack;
+
+                for (let i = 0; i < 10; i++) {
+                    let errorCurrentTime = currentTime;
+                    const errorId = generateId();
+                    errorEvents.push({
+                        time: errorCurrentTime,
+                        errorId: errorId,
+                        emitOwnEvents: () => {
+                            createPackage(errorCurrentTime, errorId, {
+                                name: "Error " + errorId,
+                                description: stack,
+                                customProps: {},
+                                visual: {
+                                    billboard: {
+                                        image: "/images/packet2.png",
+                                        color: Color.RED,
+                                        width: 16,
+                                        height: 16,
+                                        eyeOffset: new Cartesian3(0, 0, -2)
+                                    }
+                                }
+                            });
+                        },
+                        applyToList: () => currentErrorIds.push(errorId)
+                    });
+                    errorCurrentTime = addSeconds(errorCurrentTime, 10);
+                    errorEvents.push({
+                        time: errorCurrentTime,
+                        errorId: errorId,
+                        emitOwnEvents: () => destroyPackage(errorCurrentTime, errorId),
+                        applyToList: () => currentErrorIds.splice(currentErrorIds.indexOf(errorId), 1)
+                    });
+
+                    currentTime = addSeconds(currentTime, 1);
+                }
+
+                errorEvents.sort((x, y) => x.time.getTime() - y.time.getTime());
+
+                for (let errorEvent of errorEvents) {
+                    errorEvent.emitOwnEvents();
+                    errorEvent.applyToList();
+
+                    console.log(`time: ${errorEvent.time}, error: ${errorEvent.errorId}`);
+
+                    for (let i = 0; i < currentErrorIds.length; i++) {
+                        const errorId = currentErrorIds[i];
+                        movePackageToPipe(errorEvent.time, errorId, {
+                            type: PackagePositionInfoType.Pipe,
+                            fromSiteNodeId: pipe.toNodeId,
+                            toSiteNodeId: pipe.fromNodeId,
+                            interpolationAmount: (2 + i) / (currentErrorIds.length + 4)
+                        });
+                    }
+                }
+            }
         }
     }
 
