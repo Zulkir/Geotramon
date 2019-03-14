@@ -1,14 +1,19 @@
 import {IPackage, IPipe, ISpatialNode, PipeDirection} from '../transportVisualizer';
 import {cesiumVector3} from '../cesiumConverters';
 import {
-    GenericEventType, IAbsolutePackagePositionInfo, IEventInfo,
+    GenericEventType,
+    IAbsolutePackagePositionInfo,
+    IEventInfo,
     IPackageCreatedEventInfo,
     IPackageEventInfo,
-    IPackageMovedEventInfo, IParentPackagePackagePositionInfo, IPipePackagePositionInfo, ISitePackagePositionInfo,
+    IPackageMovedEventInfo,
+    IParentPackagePackagePositionInfo,
+    IPipePackagePositionInfo,
+    ISitePackagePositionInfo,
     PackageEventType,
     PackagePositionInfoType
 } from '../../shared/dataInfo';
-import {multiHermiteLerp, safeLerp} from '../../shared/algebra';
+import {multiHermiteLerp} from '../../shared/algebra';
 import {IMetaInfo} from '../../shared/dataProvider';
 import {
     IntDictionary,
@@ -16,13 +21,11 @@ import {
     NaiveSetMethods,
     ReadOnlyIntDictionary
 } from '../../shared/codingUtilities';
-import {getPipeSpline} from './cesiumPipeSplines';
+import {getDefaultPipePoints} from './cesiumPipeSplines';
 import Entity = Cesium.Entity;
 import Viewer = Cesium.Viewer;
 import JulianDate = Cesium.JulianDate;
 import Cartesian3 = Cesium.Cartesian3;
-import {ApproximationAlgorithmSpline} from '../cesiumSplines';
-import HermitePolynomialApproximation = Cesium.HermitePolynomialApproximation;
 
 interface PackageCache extends IPackage {
     id: number;
@@ -30,6 +33,7 @@ interface PackageCache extends IPackage {
     description?: string;
     events: IPackageEventInfo[];
     entity: Entity;
+    samples: Array<{time: number, pos: Cartesian3}>;
 }
 
 interface Data {
@@ -62,7 +66,8 @@ export class CesiumPackageVisualizer {
             description: "",
             events: [],
             customProps: {},
-            entity: entity
+            entity: entity,
+            samples: []
         };
         this.packageCachesById[id] = cache;
         return cache;
@@ -176,12 +181,13 @@ export class CesiumPackageVisualizer {
 
         const positionProp = new Cesium.SampledPositionProperty();
         positionProp.setInterpolationOptions({
-            interpolationDegree: 2,
+            interpolationDegree: 1,
             interpolationAlgorithm: Cesium.HermitePolynomialApproximation
         });
 
         function emitSample(time: number, pos: Cartesian3) {
             positionProp.addSample(toJulianDate(time), pos);
+            cache.samples.push({time: time, pos: pos});
             lastEmittedSampleTime = time;
         }
 
@@ -190,12 +196,16 @@ export class CesiumPackageVisualizer {
         function flushParentSamples() {
             if (!lastParentSample)
                 return;
-            const numSamples = 256;
-            for (let i = 0; i < numSamples; i++) {
-                const time = Cesium.Math.lerp(lastParentSample.time, lastDecodedEventTime, i / (numSamples - 1));
-                const pos = lastParentSample.parentCache.entity.position.getValue(toJulianDate(time));
-                if (pos)
-                    emitSample(time, pos);
+            const parentCache = lastParentSample.parentCache;
+            const startTime = lastParentSample.time;
+            const endTime = lastDecodedEventTime;
+            for (let i = 0; i < parentCache.samples.length; i++) {
+                const parentSample = parentCache.samples[i];
+                if (parentSample.time < startTime)
+                    continue;
+                if (parentSample.time > endTime)
+                    break;
+                emitSample(parentSample.time, parentSample.pos);
             }
             lastParentSample = undefined;
         }
@@ -223,7 +233,9 @@ export class CesiumPackageVisualizer {
             }
 
             const forward = pipe.from.id == lastFromId && pipe.to.id == lastToId;
-            const spline = getPipeSpline(pipe, forward ? PipeDirection.Forward : PipeDirection.Backward);
+            const direction = forward ? PipeDirection.Forward : PipeDirection.Backward;
+            //const spline = getPipeSpline(pipe, direction);
+            const pipePoints = getDefaultPipePoints(pipe, direction);
 
             function geometricalAmount(amount: number) {
                 return multiHermiteLerp(0, 1, amount, 2);
@@ -231,7 +243,10 @@ export class CesiumPackageVisualizer {
 
             if (pastPipeSamples.length === 1) {
                 const single = pastPipeSamples[0];
-                emitSample(single.time, spline.evaluate(geometricalAmount(single.amount)));
+                const placeOnPipe = geometricalAmount(single.amount);
+                const pipePointIndex = Math.round(placeOnPipe / (pipePoints.length - 1));
+                const pipePoint = pipePoints[pipePointIndex];
+                emitSample(single.time, pipePoint);
                 cleanUp();
                 return;
             }
@@ -269,6 +284,26 @@ export class CesiumPackageVisualizer {
                 points: pastPipeSamples.map(x => new Cartesian3(x.amount, 0, 0))
             });
 
+            // todo: use more than 2 samples
+
+            const firstSample = pastPipeSamples[0];
+            const lastSample = pastPipeSamples[pastPipeSamples.length - 1];
+
+            for (let i = 0; i < pipePoints.length; i++) {
+                const amount = i / (pipePoints.length - 1);
+                const time = Cesium.Math.lerp(firstSample.time, lastSample.time, amount);
+                emitSample(time, pipePoints[i]);
+            }
+
+            /*
+            const firstPipePointIndex = Math.ceil(firstSample.amount);
+            const lastPipePointIndex = Math.floor(lastSample.amount);
+            const relevantPipePoints = pipePoints.slice(firstPipePointIndex, lastPipePointIndex + 1);
+
+            for (let i = 0; i < relevantPipePoints.length; i++) {
+                emitSample()
+            }
+
             const samplesPerPipe = 128;
             for (let i = 0; i < samplesPerPipe; i++) {
                 const pipeStartTime = pastPipeSamples[0].time;
@@ -277,7 +312,7 @@ export class CesiumPackageVisualizer {
                 const linearTimeAmount = preHermiteAmountSpline.evaluate(time).x;
                 const hermiteAmount = geometricalAmount(linearTimeAmount);
                 emitSample(time, spline.evaluate(hermiteAmount, new Cesium.Cartesian3()))
-            }
+            }*/
 
             cleanUp();
         }

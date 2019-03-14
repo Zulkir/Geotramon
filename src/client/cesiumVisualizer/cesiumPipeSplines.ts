@@ -80,6 +80,12 @@ export function buildPipeSpline(pipe: IPipe, direction: PipeDirection) : SplineC
     return offsetSpline(finesseSpline(spline, 129, 2), offsetAmount);
 }
 
+export function spline2polylineUniform(spline: SplineC3, numSegments: number) {
+    // todo: validate args
+    return [...Array(numSegments).keys()]
+        .map(x => spline.evaluate(multiHermiteLerp(0, 1, x / (numSegments - 1), 2)));
+}
+
 export function spline2polylineWithTolerance(spline: SplineC3, endPointTolerance: number, midPointTolerance: number) {
     if (isNaN(endPointTolerance) || isNaN(midPointTolerance))
         throw "Tolerance is NaN";
@@ -117,6 +123,13 @@ export function spline2polylineWithTolerance(spline: SplineC3, endPointTolerance
     accumulator.push(endPoint);
 
     return accumulator;
+}
+
+export function getDefaultPipePoints(pipe: IPipe, direction: PipeDirection) {
+    const spline = getPipeSpline(pipe, direction);
+    const dist = Cartesian3.distance(spline.points[0], spline.points[spline.points.length - 1]);
+    // todo: maybe use dist
+    return spline2polylineUniform(spline, 512);
 }
 
 function buildGlobalArcSpline(posFrom: IVector3, posTo: IVector3, heightFactor: number) {

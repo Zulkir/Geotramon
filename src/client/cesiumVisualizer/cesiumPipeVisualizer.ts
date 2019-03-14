@@ -1,6 +1,6 @@
 import {IPipe, ISpatialNode, PipeDirection} from '../transportVisualizer';
 import {inDfsOrder} from '../../shared/trees';
-import {getPipeSpline, spline2polylineWithTolerance} from './cesiumPipeSplines';
+import {getDefaultPipePoints, getPipeSpline, spline2polylineWithTolerance} from './cesiumPipeSplines';
 import Cartesian3 = Cesium.Cartesian3;
 import PolylineGlowMaterialProperty = Cesium.PolylineGlowMaterialProperty;
 
@@ -92,10 +92,7 @@ czm_material czm_getMaterial(czm_materialInput materialInput)
     }
 
     private addPipeDirection(node: ISpatialNode, pipe: IPipe, direction: PipeDirection) {
-        const spline = getPipeSpline(pipe, direction);
-        const dist = Cartesian3.distance(spline.points[0], spline.points[spline.points.length - 1]);
-        const splinePolyline = spline2polylineWithTolerance(spline, 1, 1);
-
+        const splinePolyline = getDefaultPipePoints(pipe, direction);
         const instance = new Cesium.GeometryInstance({
             geometry: new Cesium.PolylineGeometry({
                 positions: splinePolyline,
