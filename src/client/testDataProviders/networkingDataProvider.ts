@@ -734,19 +734,19 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
             const companies: Array<{name: string, color: IColor}> = [
                 {
                     name: "Google",
-                    color: Color.GREEN
+                    color: new Color(0, 0.8, 0)
                 },
                 {
                     name: "IBM",
-                    color: Color.LIGHTSKYBLUE
+                    color: new Color(0, 1, 1)
                 },
                 {
                     name: "Amazon",
-                    color: Color.YELLOW
+                    color: new Color(1, 1, 0)
                 },
                 {
                     name: "Microsoft",
-                    color: Color.BLUE
+                    color: new Color(0, 0, 1)
                 },
             ];
 
@@ -954,7 +954,7 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
                         visual: {
                             billboard: {
                                 image: "/images/packet2.png",
-                                color: Color.DARKBLUE,
+                                color: new Color(0, 0, 0.8),
                                 width: 16,
                                 height: 16,
                                 eyeOffset: new Cartesian3(0, 0, -2)
