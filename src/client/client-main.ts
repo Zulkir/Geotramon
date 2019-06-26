@@ -16,7 +16,7 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
 Cesium.Math.setRandomNumberSeed(3);
 
 global.visualizer = new CesiumTransportVisualizer(viewer);
-global.dataProvider = new NetworkingDataProvider();
+global.dataProvider = new DeliveryDataProvider();
 global.visualizer.bind(global.dataProvider).then(() => {
 
     //viewer.zoomTo(viewer.entities.values.filter(x => (x.name || '').includes("CS"))[0]);

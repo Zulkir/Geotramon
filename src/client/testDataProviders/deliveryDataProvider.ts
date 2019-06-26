@@ -1177,7 +1177,13 @@ We have over 300 undergraduates studying for Part I, II and III of the Computer 
                     let result = '<style>table {width: 100%;border-collapse: collapse;} table td {border: 1px solid white; text-align: center;}</style>\n';
                     result += "<table><tr><th>ID</th><th>CONTENT</th><th>FROM</th><th>TO</th></tr>\n";
                     for (let itemInfo of itemInfos) {
-                        result += `<tr><td>${itemInfo.id}</td><td>${itemInfo.shortDesc}</td><td>${itemInfo.fromName}</td><td>${itemInfo.toName}</td></tr>\n`
+                        result +=
+`<tr>
+    <td onclick="parent.GtmVisualizer.selectPackage(x => x.id === ${itemInfo.id})">${itemInfo.id}</td>
+    <td>${itemInfo.shortDesc}</td>
+    <td>${itemInfo.fromName}</td>
+    <td>${itemInfo.toName}</td>
+</tr>\n`
                     }
                     result += "</table>";
                     return result;

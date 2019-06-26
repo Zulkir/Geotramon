@@ -84,6 +84,7 @@ export class CesiumTransportVisualizer implements ITransportVisualizer {
 
     public constructor(viewer: Cesium.Viewer) {
         this.viewer = viewer;
+        this.initializedGlobalViewerProps();
         this.spatialNodes = new VisualizerObjectCollectionImpl<ISpatialNode>();
         this.sites = new VisualizerObjectCollectionImpl<ISite>();
         this.pipes = new VisualizerObjectCollectionImpl<IPipe>();
@@ -128,12 +129,17 @@ export class CesiumTransportVisualizer implements ITransportVisualizer {
         this.subscriptionToken = this.dataProvider.subscribe(e => this.packageVisualizer.onEvent(e));
     }
 
+    private initializedGlobalViewerProps() {
+        (this.viewer as any).infoBox.frame.sandbox += " allow-scripts";
+        (parent as any).GtmVisualizer = this;
+    }
+
     private bindTime(startTime: Date, endTime: Date) {
         //Set bounds of our simulation time
         const start = Cesium.JulianDate.fromDate(startTime);
         const stop = Cesium.JulianDate.fromDate(endTime);
 
-//Make sure viewer is at the desired time.
+        //Make sure viewer is at the desired time.
         this.viewer.clock.startTime = start.clone();
         this.viewer.clock.stopTime = stop.clone();
         this.viewer.clock.currentTime = start.clone();
@@ -141,7 +147,7 @@ export class CesiumTransportVisualizer implements ITransportVisualizer {
         this.viewer.clock.multiplier = 1;
         this.viewer.clock.shouldAnimate = true;
 
-//Set timeline to simulation bounds
+        //Set timeline to simulation bounds
         this.viewer.timeline.zoomTo(start, stop);
     }
 
